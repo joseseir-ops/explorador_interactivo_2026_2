@@ -1,5 +1,6 @@
-
+// js/app.js
 import { pokemonData } from './datos.js';
+import { filtrarPokemones, contarPokemones } from './logica.js';
 
 const TYPE_COLORS = {
     electric: { bg: 'bg-[#F8D030]', text: 'text-[#1F2340]', border: 'border-[#F8D030]' },
@@ -7,7 +8,8 @@ const TYPE_COLORS = {
     water:    { bg: 'bg-[#6890F0]', text: 'text-white',     border: 'border-[#6890F0]' },
     grass:    { bg: 'bg-[#78C850]', text: 'text-white',     border: 'border-[#78C850]' },
     psychic:  { bg: 'bg-[#F85888]', text: 'text-white',     border: 'border-[#F85888]' },
-    rock:     { bg: 'bg-[#A8A878]', text: 'text-white',     border: 'border-[#A8A878]' }
+    rock:     { bg: 'bg-[#A8A878]', text: 'text-white',     border: 'border-[#A8A878]' },
+    normal:   { bg: 'bg-[#A8A878]', text: 'text-white',     border: 'border-[#A8A878]' }
 };
 
 const tarjetaHTML = (p) => {
@@ -24,32 +26,47 @@ const tarjetaHTML = (p) => {
     `;
 };
 
+// Referencias al DOM
 const grilla = document.getElementById('grilla-pokemon');
+const contadorElemento = document.getElementById('contador');
 const formFiltros = document.querySelector('form[role="search"]');
 const inputBusqueda = document.getElementById('busqueda');
 const selectFiltro = document.getElementById('filtro');
 const modal = document.getElementById('modal-detalle');
+
+// Render con ESTADO VACÍO
 const render = (lista) => {
+    // Requisito: Contar
+    const totalMostrados = contarPokemones(lista);
+    const totalDatos = contarPokemones(pokemonData);
+    if (contadorElemento) {
+        contadorElemento.textContent = `Mostrando ${totalMostrados} de ${totalDatos} Pokémon`;
+    }
+
+    // Requisito: Estado vacío
+    if (lista.length === 0) {
+        grilla.innerHTML = `<div class="col-span-full py-12 text-center text-lg font-semibold text-[#1F2340]">No se encontraron Pokémon con esos filtros.</div>`;
+        return;
+    }
+
     grilla.innerHTML = lista.map(tarjetaHTML).join('');
 };
 
+// Inicializar
 render(pokemonData);
 
+// Buscador y Filtros usando logica.js
 formFiltros.addEventListener('submit', (e) => {
-    e.preventDefault(); // Evita recargar la página
-
-    const termino = inputBusqueda.value.toLowerCase().trim();
+    e.preventDefault();
+    const termino = inputBusqueda.value.trim();
     const tipoSeleccionado = selectFiltro.value;
-
-    const resultados = pokemonData.filter((p) => {
-        const matchNombre = p.name.toLowerCase().includes(termino);
-        const matchTipo = tipoSeleccionado === '' || p.type === tipoSeleccionado;
-        return matchNombre && matchTipo;
-    });
-
+    
+    // Llamamos a la función pura
+    const resultados = filtrarPokemones(pokemonData, termino, tipoSeleccionado);
     render(resultados);
 });
 
+// Modal y Delegación de Eventos
 const abrirDetalle = (p) => {
     document.getElementById('modal-nombre').textContent = p.name;
     document.getElementById('modal-img').src = p.image;
